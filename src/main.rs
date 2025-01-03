@@ -5,6 +5,7 @@ use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::prelude::*;
 
+mod commands;
 use tracing::info;
 
 struct Handler;
