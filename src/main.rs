@@ -1,49 +1,97 @@
+#![allow(dead_code)]
+
+mod config;
+mod utils;
+mod commands;
+mod listeners;
+mod constants;
+
+use listeners::handler::Handler;
+use constants::REQWEST_USER_AGENT;
+use config::ConfigurationData;
 use dotenv::dotenv;
 use std::env;
 
-use serenity::async_trait;
-use serenity::model::channel::Message;
-use serenity::prelude::*;
+use poise::{serenity_prelude as serenity, Framework, FrameworkOptions};
+use reqwest::{redirect::Policy, Client};
+use serenity::GatewayIntents;
+use tracing::{info, Level};
+use tracing_log::LogTracer;
+use tracing_subscriber::{FmtSubscriber, EnvFilter};
+use utils::read_config;
 
-mod commands;
-use tracing::info;
+type Error = anyhow::Error;
+type Context<'a> = poise::Context<'a, Data, Error>;
 
-struct Handler;
 
-#[async_trait]
-impl EventHandler for Handler {
-    async fn message(&self, ctx: Context, msg: Message) {
-        info!("received message from: {}", msg.author);
-        if msg.content == "!hey" {
-            let resp  = format!("Hello {}", msg.author);
-            if let Err(why) = msg.channel_id.say(&ctx.http, resp).await {
-                println!("Error sending message: {why:?}");
-            }
-        }
-    }
+struct Data {
+    config: ConfigurationData, 
+    reqwest_container: Client,
 }
 
 #[tokio::main]
-async fn main() {
-    tracing_subscriber::fmt::init();
+async fn main() -> Result<(), Error>{
+
+    let configuration = read_config("config.toml");
+
+    LogTracer::init()?;
+
+    let mut level: Level = Level::INFO;
+
+    if configuration.bot.logging.enabled {
+        level = match configuration.bot.logging.level.as_str() {
+            "error" => Level::ERROR,
+            "warn"  => Level::WARN,
+            "info"  => Level::INFO,
+            "debug" => Level::DEBUG,
+            _       => Level::TRACE,
+        };
+    }
+
+    let subscriber = FmtSubscriber::builder()
+        .with_target(false)
+        .with_max_level(level)
+        .with_env_filter(EnvFilter::from_default_env())
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber)?;
+
+    info!("Tracing initialized with logging level set to {}.", "info".to_string());
+    
 
     dotenv().ok();
 
-    // Login with a bot token from the environment
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
-    // Set gateway intents, which decides what events the bot will be notified about
-    let intents = GatewayIntents::GUILD_MESSAGES
-        | GatewayIntents::DIRECT_MESSAGES
-        | GatewayIntents::MESSAGE_CONTENT;
+    
+    let framework = Framework::builder()
+        .options(FrameworkOptions {
+            commands: vec![
+                commands::utilities::hello(),
+                //TODO: put commands here
+            ],
+        ..Default::default()
+    })
+    .setup(move |context, _ready, framework| {
+        Box::pin(async move {
+            poise::builtins::register_globally(context, &framework.options().commands).await?;
+            Ok(Data {
+                config: read_config("config.toml"),
+                reqwest_container: Client::builder().user_agent(REQWEST_USER_AGENT).redirect(Policy::none()).build()?
+            })
+        })
+    })
+    .build();
 
-    // Create a new instance of the Client, logging in as a bot.
-    let mut client =
-        Client::builder(&token, intents).event_handler(Handler).await.expect("Err creating client");
 
-    info!("starting server");
+    let command_count = &framework.options().commands.len();
+    let commands_str: String = framework.options().commands.iter().map(|c| &c.name).cloned().collect::<Vec<String>>().join(", ");
+    info!("Initialized {} commands: {}", command_count, commands_str);
 
-    // Start listening for events by starting a single shard
-    if let Err(why) = client.start().await {
-        println!("Client error: {why:?}");
+    let mut client = serenity::Client::builder(token, GatewayIntents::all()).event_handler(Handler).framework(framework).await?;
+    if let Err(why) = client.start_autosharded().await {
+        eprintln!("An error occurred while running the client: {why:?}");
     }
+
+    Ok(())
+    
 }
