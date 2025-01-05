@@ -1,4 +1,5 @@
 use std::{fs::File, io::Read};
+pub mod notion;
 use crate::config::ConfigurationData;
 
 pub fn read_config(file: &str) -> ConfigurationData {

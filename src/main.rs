@@ -1,24 +1,24 @@
 #![allow(dead_code)]
 
+mod actions;
 mod config;
 mod utils;
 mod commands;
 mod listeners;
 mod constants;
 
+use utils::read_config;
 use listeners::handler::Handler;
 use constants::REQWEST_USER_AGENT;
 use config::ConfigurationData;
-use dotenv::dotenv;
-use std::env;
 
+use dotenv::dotenv;
 use poise::{serenity_prelude as serenity, Framework, FrameworkOptions};
 use reqwest::{redirect::Policy, Client};
 use serenity::GatewayIntents;
 use tracing::{info, Level};
 use tracing_log::LogTracer;
 use tracing_subscriber::{FmtSubscriber, EnvFilter};
-use utils::read_config;
 
 type Error = anyhow::Error;
 type Context<'a> = poise::Context<'a, Data, Error>;
@@ -61,7 +61,7 @@ async fn main() -> Result<(), Error>{
 
     dotenv().ok();
 
-    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    let token = dotenv::var("DISCORD_TOKEN").expect("Expected a token in the environment");
     
     let framework = Framework::builder()
         .options(FrameworkOptions {
