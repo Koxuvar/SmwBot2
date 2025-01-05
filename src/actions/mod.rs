@@ -1,3 +1,6 @@
+mod project;
+use project::*;
+
 use dotenv::dotenv;
 use notion::{ids::DatabaseId, models::{search::NotionSearch, Object, Database}, Error, NotionApi};
 
@@ -9,39 +12,6 @@ pub struct NotionHandler {
     n: NotionApi,
 }
 
-enum ProjectStatus {
-    Backlog,
-    Planning,
-    InProgress,
-    Paused,
-    Done,
-    Canceled,
-}
-
-enum ProjectPriority {
-    Low,
-    Medium,
-    High,
-    LongTerm,
-}
-
-struct Project {
-    id: String,
-    name: String,
-    status: ProjectStatus,
-    priority: ProjectPriority,
-}
-
-impl Project {
-    pub fn new(id: String, name: String, status: ProjectStatus, priority: ProjectPriority) -> Self {
-        Self {
-            id,
-            name,
-            status,
-            priority,
-        }
-    }
-}
 
 impl NotionHandler {
     pub fn new() -> Self {
