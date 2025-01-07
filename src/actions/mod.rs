@@ -33,30 +33,7 @@ impl NotionHandler {
         let mut project_list: Vec<Project> = Vec::new();
         
         for db in db_list {
-            db.properties.iter().for_each(|x| {
-                 project_list.push(Project::new(
-                    x.id.to_string(),
-                    x.title.to_string(),
-                    match x.select.as_ref().unwrap().select {
-                        "Backlog" => ProjectStatus::Backlog,
-                        "Planning" => ProjectStatus::Planning,
-                        "In Progress" => ProjectStatus::InProgress,
-                        "Paused" => ProjectStatus::Paused,
-                        "Done" => ProjectStatus::Done,
-                        "Canceled" => ProjectStatus::Canceled,
-                        _ => ProjectStatus::Backlog,
-                    },
-                    match x.select.as_ref().unwrap().select {
-                        "Low" => ProjectPriority::Low,
-                        "Medium" => ProjectPriority::Medium,
-                        "High" => ProjectPriority::High,
-                        "Long Term" => ProjectPriority::LongTerm,
-                        _ => ProjectPriority::Low,
-                    }
-                )
-            );
-            }
-            );
+            //TODO: Split apart each database into its own struct
         }
 
         Ok(project_list)
