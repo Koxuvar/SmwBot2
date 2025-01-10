@@ -7,30 +7,7 @@
     appid = "" # replace with unquoted integer
     token = ""
 
-    [bot.denylist]
-        # The denylist for the Spotify commands. Anyone who is in this list
-        # are unable to have their now playing status checked and/or retrieved.
-        [bot.denylist.spotify]
-        ids = [ ]
-
     [bot.logging]
     enabled = true
     level = "info"
 
-[api]
-
-    [api.music]
-
-        [api.music.spotify]
-        client_id = ""
-        client_secret = ""
-
-        [api.music.lastfm]
-        api_key = ""
-
-    [api.entertainment]
-    tmdb = ""
-
-    [api.services]
-    github = ""
-    google = ""
