@@ -1,3 +1,5 @@
+
+#[derive(Clone)]
 pub enum ProjectStatus {
     Backlog,
     Planning,
@@ -7,21 +9,24 @@ pub enum ProjectStatus {
     Canceled,
 }
 
+#[derive(Clone)]
 pub enum ProjectPriority {
     Low,
     Medium,
     High,
     LongTerm,
 }
+
+#[derive(Clone)]
 pub struct Project {
     id: String,
-    name: String,
+    pub name: String,
     status: ProjectStatus,
     priority: ProjectPriority,
 }
 
 impl Project {
-    pub fn new(id: String, name: String, status: ProjectStatus, priority: ProjectPriority) -> Self {
+    pub fn create(id: String, name: String, status: ProjectStatus, priority: ProjectPriority) -> Self {
         Self {
             id,
             name,
